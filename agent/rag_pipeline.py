@@ -22,13 +22,16 @@ VECTOR_OIR = PROJECT_ROOT / 'db' / 'chroma.db'
 
 # 1. 全局单列初始化 Embedding model (BGE)
 print(f'正在加载 BGE 嵌入模型......')
-model_name = PROJECT_ROOT / 'EMBEDDING_MODEL'
+model_path = str(PROJECT_ROOT / os.getenv('EMBEDDING_MODEL', 'local_models'))
+# → 'D:\\2_hr_agent\\local_models'
+
 embeddings = HuggingFaceEmbeddings(
-    model_name = os.getenv(model_name),
-    # model_kwargs = {'device':'cpu'},
-    encode_kwargs = {'normalize_embeddings': True},        # 如果是 英伟达显卡可以填写 cuda, 苹果M芯片填写 mps，其他填写 cpu 或这个参数都不写
+    model_name=model_path,
+    encode_kwargs={'normalize_embeddings': True},
 )
 
+
+# 向量化数据库
 def init_vector_store() -> Chroma:
     """初始化向量库，如果存在则读取，如果不存在则切分文档并生成"""
     if VECTOR_OIR.exists() and any(VECTOR_OIR.iterdir()):
@@ -59,7 +62,7 @@ def init_vector_store() -> Chroma:
     splits = text_splitter.split_documents(md_header_splits)
 
     print(f'文档切分完毕，共生成{len(splits)}个语义文本块(chunks)。正在存入数据库')
-
+    #　原始文本块  →  向量化  →  存入数据库
     vectorstore = Chroma.from_documents(
         documents=splits,
         embedding = embeddings,
@@ -98,6 +101,6 @@ def search_hr_policy(query:str) -> str:
         section = doc.metadata.get('Section', '未知段落')
         context_parts.append(f'【来源{i}】 {chapter} -> {section} \n {doc.page_content}')
 
-        merged_context = '\n\n'.join(context_parts)
+    merged_context = '\n\n'.join(context_parts)
 
-        return f'【知识库检索结果】\n{merged_context}'
+    return f'【知识库检索结果】\n{merged_context}'
