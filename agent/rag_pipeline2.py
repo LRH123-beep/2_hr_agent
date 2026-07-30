@@ -60,7 +60,7 @@ llm = ChatOpenAI(
     temperature=0.7
 )
 
-# 2. 构建多路召回 Retriver
+# 2. 构建多路召回 Retriever
 def build_ensemble_retriever():
     """构建 BM25 + Vector 的混合检索器"""
     if not DOC_PATH.exists():
